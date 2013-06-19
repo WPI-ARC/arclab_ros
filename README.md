@@ -8,11 +8,25 @@ This repository contains Catkinized packages for ROS Groovy+. It will not build 
 Repository structure
 --------------------
 
+`simple_robot_kinematics` - Provide a simple Python interface to the forward and inverse kinematics services of a robot. Formerly supported the PR2 using `arm_navigation`, now supports the PR2 using MoveIt!. Support will be added for the Baxter robot in the near future.
+
+`generic_tf_broadcaster` - Provides a simple fixed-frame TF broadcaster configurable via launch file. This is used extensively in other lab projects.
+
+`ros_email` - Provides a SMTP email client for ROS that supports both simple text-only emails and emails with attached files. This package allows your robot to send email notifications and tweet both text and pictures using widely available email->Twitter services.
+
+`UDEV_rules` - Provides UDEV rules to set device access permissions for devices used in lab, and a script to install them.
+
 
 Stability and development status
 --------------------------------
 
 `simple_robot_kinematics` - Package has been catkinized, awaiting testing with MoveIt! on the PR2 in simulation and real hardware.
+
+`generic_tf_broadcaster` - Package is stable and tested.
+
+`UDEV_rules` - All current rules are stable and tested.
+
+`ros_email` - Package is stable and tested.
 
 
 Build and usage instructions
