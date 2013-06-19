@@ -1,0 +1,6 @@
+string recipient
+string message_title
+string message_text
+ros_email/attachment[] attachments
+---
+int32 result

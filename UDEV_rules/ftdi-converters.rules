@@ -1,0 +1,2 @@
+# Allow read-write access to FTDI USB-Serial converters
+ATTRS{idProduct}=="6001",ATTRS{idVendor}=="0403",MODE="777",GROUP="input"

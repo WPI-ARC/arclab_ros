@@ -1,0 +1,14 @@
+<launch>
+  <arg name="username" />
+  <arg name="password" />
+  <arg name="server" />
+  <arg name="port" />
+
+  <node pkg="ros_email" type="mail_node.py" name="ros_email" output="screen">
+    <param name="username" type="string" value="$(arg username)" />
+    <param name="password" type="string" value="$(arg password)" />
+    <param name="mailserver" type="string" value="$(arg server)" />
+    <param name="serverport" type="int" value="$(arg port)" />
+  </node>
+
+</launch>

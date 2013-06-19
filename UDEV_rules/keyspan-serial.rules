@@ -1,0 +1,2 @@
+# Make the Keyspan USA-19hs USB-Serial adapter writeable
+ATTRS{idProduct}=="0121",ATTRS{idVendor}=="06cd",MODE="777",GROUP="input"

@@ -1,0 +1,2 @@
+# Allow read-write access to the Razer Hydra motion control game controller
+ATTRS{idProduct}=="0300",ATTRS{idVendor}=="1532",MODE="777",GROUP="input"

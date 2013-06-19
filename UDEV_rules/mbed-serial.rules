@@ -1,0 +1,2 @@
+# Allow read-write access to the MBED USB-Serial debug interface
+ATTRS{idProduct}=="0204",ATTRS{idVendor}=="0d28",MODE="777",GROUP="input"

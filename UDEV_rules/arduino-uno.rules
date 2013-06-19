@@ -1,0 +1,2 @@
+# make the arduino uno device writeable
+ATTRS{idProduct}=="0043",ATTRS{idVendor}=="2341",MODE="777",GROUP="input"
