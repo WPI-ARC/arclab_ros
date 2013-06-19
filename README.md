@@ -8,7 +8,7 @@ This repository contains Catkinized packages for ROS Groovy+. It will not build 
 Repository structure
 --------------------
 
-`simple_robot_kinematics` - Provide a simple Python interface to the forward and inverse kinematics services of a robot. Formerly supported the PR2 using `arm_navigation`, now supports the PR2 using MoveIt!. Support will be added for the Baxter robot in the near future.
+`simple_robot_kinematics` - Provides a simple Python interface to the forward and inverse kinematics services of a robot. Formerly supported the PR2 using `arm_navigation`, now supports the PR2 using MoveIt!. Support will be added for the Baxter robot in the near future.
 
 `generic_tf_broadcaster` - Provides a simple fixed-frame TF broadcaster configurable via launch file. This is used extensively in other lab projects.
 
