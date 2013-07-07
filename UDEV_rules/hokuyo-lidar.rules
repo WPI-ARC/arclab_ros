@@ -1,0 +1,2 @@
+#Make a Hokuyo USB LIDAR accessible
+ATTRS{idProduct}=="0000",ATTRS{idVendor}=="15d1",MODE="777",GROUP="input"
