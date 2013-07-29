@@ -1,0 +1,2 @@
+# Make the takktile pressure sensor control board writeable
+ATTRS{idProduct}=="74c7",ATTRS{idVendor}=="59e3",MODE="777",GROUP="input"
