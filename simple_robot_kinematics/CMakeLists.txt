@@ -16,10 +16,10 @@ catkin_python_setup()
 #######################################
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  geometry_msgs moveit_msgs std_msgs trajectory_msgs
-)
+#generate_messages(
+#  DEPENDENCIES
+#  geometry_msgs moveit_msgs std_msgs trajectory_msgs
+#)
 
 ###################################
 ## catkin specific configuration ##
@@ -32,8 +32,8 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES simple_robot_kinematics
-#  CATKIN_DEPENDS geometry_msgs moveit_msgs roscpp rospy std_msgs trajectory_msgs
-#  DEPENDS system_lib
+  CATKIN_DEPENDS geometry_msgs moveit_msgs roscpp rospy std_msgs trajectory_msgs
+  DEPENDS system_lib
 )
 
 ###########
