@@ -15,183 +15,237 @@ import random
 import time
 
 from std_msgs.msg import String
+from sensor_msgs.msg import JointState
 from geometry_msgs.msg import *
 from moveit_msgs.msg import *
+from moveit_msgs.srv import *
 
-class SimpleLeftArmKinematics:
+def PrettyPrintMoveItErrorCode(error_code, label=""):
+    error_str = ""
+    if (error_code == MoveItErrorCodes.SUCCESS):
+        error_str = ""
+    elif (error_code == MoveItErrorCodes.FAILURE):
+        error_str = "Failure"
+    elif (error_code == MoveItErrorCodes.PLANNING_FAILED):
+        error_str = "Planning Failed"
+    elif (error_code == MoveItErrorCodes.INVALID_MOTION_PLAN):
+        error_str = "Invalid Motion Plan"
+    elif (error_code == MoveItErrorCodes.MOTION_PLAN_INVALIDATED_BY_ENVIRONMENT_CHANGE):
+        error_str = "Motion Plan Invalidated By Environment Change"
+    elif (error_code == MoveItErrorCodes.CONTROL_FAILED):
+        error_str = "Control Failed"
+    elif (error_code == MoveItErrorCodes.UNABLE_TO_AQUIRE_SENSOR_DATA):
+        error_str = "Unable To Acquire Sensor Data"
+    elif (error_code == MoveItErrorCodes.TIMED_OUT):
+        error_str = "Timed Out"
+    elif (error_code == MoveItErrorCodes.PREEMPTED):
+        error_str = "Preempted"
+    elif (error_code == MoveItErrorCodes.START_STATE_IN_COLLISION):
+        error_str = "Start State In Collision"
+    elif (error_code == MoveItErrorCodes.START_STATE_VIOLATES_PATH_CONSTRAINTS):
+        error_str = "Start State Violated Path Constraints"
+    elif (error_code == MoveItErrorCodes.GOAL_IN_COLLISION):
+        error_str = "Goal In Collision"
+    elif (error_code == MoveItErrorCodes.GOAL_VIOLATES_PATH_CONSTRAINTS):
+        error_str = "Goal Violates Path Constraints"
+    elif (error_code == MoveItErrorCodes.GOAL_CONSTRAINTS_VIOLATED):
+        error_str = "Goal Constraints Violated"
+    elif (error_code == MoveItErrorCodes.INVALID_GROUP_NAME):
+        error_str = "Invalid Group Name"
+    elif (error_code == MoveItErrorCodes.INVALID_GOAL_CONSTRAINTS):
+        error_str = "Invalid Goal Constraints"
+    elif (error_code == MoveItErrorCodes.INVALID_ROBOT_STATE):
+        error_str = "Invalid Robot State"
+    elif (error_code == MoveItErrorCodes.INVALID_LINK_NAME):
+        error_str = "Invalid Link Name"
+    elif (error_code == MoveItErrorCodes.INVALID_OBJECT_NAME):
+        error_str = "Invalid Object Name"
+    elif (error_code == MoveItErrorCodes.FRAME_TRANSFORM_FAILURE):
+        error_str = "Frame Transform Failure"
+    elif (error_code == MoveItErrorCodes.COLLISION_CHECKING_UNAVAILABLE):
+        error_str = "Collision Checking Unavailable"
+    elif (error_code == MoveItErrorCodes.ROBOT_STATE_STALE):
+        error_str = "Robot State Stale"
+    elif (error_code == MoveItErrorCodes.SENSOR_INFO_STALE):
+        error_str = "Sensor Info Stale"
+    elif (error_code == MoveItErrorCodes.NO_IK_SOLUTION):
+        error_str = "No IK Solution"
+    else:
+        error_str = "UNKNOWN MOVEIT ERROR " + str(error_code)
+    if (error_str == ""):
+        rospy.loginfo("<MoveIt! Status> Success [" + label + "]")
+    else:
+        rospy.logerr("<MoveIt! Status> " + error_str + " [" + label + "]")
+
+def MakeLeftArmJointState(left_arm_joint_positions):
+    joint_state = JointState()
+    joint_state.name = ["l_shoulder_pan_joint", "l_shoulder_lift_joint", "l_upper_arm_roll_joint", "l_elbow_flex_joint", "l_forearm_roll_joint", "l_wrist_flex_joint", "l_wrist_roll_joint"]
+    joint_state.position = left_arm_joint_positions
+    assert(len(joint_state.name) == len(joint_state.position))
+    return joint_state
+
+def MakeRightArmJointState(right_arm_joint_positions):
+    joint_state = JointState()
+    joint_state.name = ["r_shoulder_pan_joint", "r_shoulder_lift_joint", "r_upper_arm_roll_joint", "r_elbow_flex_joint", "r_forearm_roll_joint", "r_wrist_flex_joint", "r_wrist_roll_joint"]
+    joint_state.position = right_arm_joint_positions
+    assert(len(joint_state.name) == len(joint_state.position))
+    return joint_state
+
+def ExtractLeftArmFromJointState(joint_state):
+    joint_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    joint_values[0] = joint_state.position[joint_state.name.index("l_shoulder_pan_joint")]
+    joint_values[1] = joint_state.position[joint_state.name.index("l_shoulder_lift_joint")]
+    joint_values[2] = joint_state.position[joint_state.name.index("l_upper_arm_roll_joint")]
+    joint_values[3] = joint_state.position[joint_state.name.index("l_elbow_flex_joint")]
+    joint_values[4] = joint_state.position[joint_state.name.index("l_forearm_roll_joint")]
+    joint_values[5] = joint_state.position[joint_state.name.index("l_wrist_flex_joint")]
+    joint_values[6] = joint_state.position[joint_state.name.index("l_wrist_roll_joint")]
+    return joint_values
+
+def ExtractRightArmFromJointState(joint_state):
+    joint_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    joint_values[0] = joint_state.position[joint_state.name.index("r_shoulder_pan_joint")]
+    joint_values[1] = joint_state.position[joint_state.name.index("r_shoulder_lift_joint")]
+    joint_values[2] = joint_state.position[joint_state.name.index("r_upper_arm_roll_joint")]
+    joint_values[3] = joint_state.position[joint_state.name.index("r_elbow_flex_joint")]
+    joint_values[4] = joint_state.position[joint_state.name.index("r_forearm_roll_joint")]
+    joint_values[5] = joint_state.position[joint_state.name.index("r_wrist_flex_joint")]
+    joint_values[6] = joint_state.position[joint_state.name.index("r_wrist_roll_joint")]
+    return joint_values
+
+class SimpleInverseKinematics:
 
     def __init__(self):
-        #Set the IK solver info
-        rospy.wait_for_service("pr2_left_arm_kinematics/get_ik_solver_info")
-        self.ik_solver_host = rospy.ServiceProxy("pr2_left_arm_kinematics/get_ik_solver_info", GetKinematicSolverInfo)
-        self.ik_solver_req = GetKinematicSolverInfo._request_class()
-        self.ik_solver_res = self.ik_solver_host.call(self.ik_solver_req)
-        #Set the FK solver info
-        rospy.wait_for_service("pr2_left_arm_kinematics/get_fk_solver_info")
-        self.fk_solver_host = rospy.ServiceProxy("pr2_left_arm_kinematics/get_fk_solver_info", GetKinematicSolverInfo)
-        self.fk_solver_req = GetKinematicSolverInfo._request_class()
-        self.fk_solver_res = self.fk_solver_host.call(self.fk_solver_req)
-        #Set up the left arm forward kinematics service call
-        rospy.wait_for_service("pr2_left_arm_kinematics/get_fk")
-        self.left_FK_host = rospy.ServiceProxy("pr2_left_arm_kinematics/get_fk", GetPositionFK)
-        #Set up the left arm collision-free inverse kinematics service call
-        rospy.wait_for_service("pr2_left_arm_kinematics/get_constraint_aware_ik")
-        self.left_CAIK_host = rospy.ServiceProxy("pr2_left_arm_kinematics/get_constraint_aware_ik", GetConstraintAwarePositionIK)
-        #Set up the left arm inverse kinematics service call
-        rospy.wait_for_service("pr2_left_arm_kinematics/get_ik")
-        self.left_IK_host = rospy.ServiceProxy("pr2_left_arm_kinematics/get_ik", GetPositionIK)
-        rospy.loginfo("PR2 Left arm kinematics services loaded")
+        rospy.loginfo("Connecting to MoveIt! IK service...")
+        rospy.wait_for_service("compute_ik")
+        self.ikClient = rospy.ServiceProxy("compute_ik", GetPositionIK)
+        rospy.loginfo("...IK service loaded")
 
-    def RunConstraintAwareIK(self, desired_wrist_pose_stamped, seed_state=None):
-        ik_request = GetConstraintAwarePositionIK._request_class()
-        #Populate the header
-        ik_request.timeout = rospy.Duration(5.0)
-        ik_request.ik_request.ik_link_name = "l_wrist_roll_link"
-        #Populate the desired pose
-        ik_request.ik_request.pose_stamped = desired_wrist_pose_stamped
-        #Populate the IK seed state
-        ik_request.ik_request.ik_seed_state.joint_state.name = self.ik_solver_res.kinematic_solver_info.joint_names
-        ik_request.ik_request.ik_seed_state.joint_state.position = []
-        if (seed_state == None):
-            for i in range(len(self.ik_solver_res.kinematic_solver_info.joint_names)):
-                middle_position = (self.ik_solver_res.kinematic_solver_info.limits[i].min_position + self.ik_solver_res.kinematic_solver_info.limits[i].max_position) / 2.0
-                ik_request.ik_request.ik_seed_state.joint_state.position.append(middle_position)
-        else:
-            ik_request.ik_request.ik_seed_state.joint_state.position = seed_state
-        #Actually call the IK system
-        ik_response = self.left_CAIK_host.call(ik_request)
-        if (ik_response.error_code.val == ik_response.error_code.SUCCESS):
-            return ik_response.solution.joint_state.position
-        else:
-            #Unable to find an IK solution
-            return None
-
-    def RunIK(self, desired_wrist_pose_stamped, seed_state=None):
-        ik_request = GetPositionIK._request_class()
-        #Populate the header
-        ik_request.timeout = rospy.Duration(5.0)
-        ik_request.ik_request.ik_link_name = "l_wrist_roll_link"
-        #Populate the desired pose
-        ik_request.ik_request.pose_stamped = desired_wrist_pose_stamped
-        #Populate the IK seed state
-        ik_request.ik_request.ik_seed_state.joint_state.name = self.ik_solver_res.kinematic_solver_info.joint_names
-        ik_request.ik_request.ik_seed_state.joint_state.position = []
-        if (seed_state == None):
-            for i in range(len(self.ik_solver_res.kinematic_solver_info.joint_names)):
-                middle_position = (self.ik_solver_res.kinematic_solver_info.limits[i].min_position + self.ik_solver_res.kinematic_solver_info.limits[i].max_position) / 2.0
-                ik_request.ik_request.ik_seed_state.joint_state.position.append(middle_position)
-        else:
-            ik_request.ik_request.ik_seed_state.joint_state.position = seed_state
-        #Actually call the IK system
-        ik_response = self.left_IK_host.call(ik_request)
-        if (ik_response.error_code.val == ik_response.error_code.SUCCESS):
-            return ik_response.solution.joint_state.position
-        else:
-            #Unable to find an IK solution
-            return None
-
-    def RunFK(self, joint_state, target_frame_id, target_link_id):
-        fk_request = GetPositionFK._request_class()
-        fk_request.header.frame_id = target_frame_id
-        if (type(target_link_id) == type([])):
-            fk_request.fk_link_names = target_link_id
-        else:
-            fk_request.fk_link_names = [target_link_id]
-        fk_request.robot_state.joint_state.name = self.fk_solver_res.kinematic_solver_info.joint_names
-        fk_request.robot_state.joint_state.position = joint_state
-        fk_response = self.left_FK_host.call(fk_request)
-        if (fk_response.error_code.val == fk_response.error_code.SUCCESS):
-            if (len(fk_response.pose_stamped) == 1):
-                return fk_response.pose_stamped[0]
+    def ComputeLeftArmIK(self, desired_wrist_pose_stamped, seed_state=None, collision_aware=False, raw_output=False):
+        request = GetPositionIKRequest()
+        request.ik_request.group_name = "left_arm"
+        request.ik_request.pose_stamped = desired_wrist_pose_stamped
+        request.ik_request.avoid_collisions = collision_aware
+        if (seed_state != None):
+            if (type(seed_state) == RobotState):
+                request.ik_request.robot_state = seed_state
+            elif (type(seed_state) == JointState):
+                request.ik_request.robot_state.joint_state = seed_state
+            elif (type(seed_state) == list):
+                request.ik_request.robot_state.joint_state = MakeLeftArmJointState(seed_state)
+        response = None
+        try:
+            response = self.ikClient.call(request)
+        except:
+            rospy.logerr("IK service call failed to connect to IK server")
+            response = None
+        if (response != None):
+            # Check the error state
+            if (response.error_code.val == MoveItErrorCodes.SUCCESS):
+                if (raw_output):
+                    return response.solution
+                else:
+                    return ExtractLeftArmFromJointState(response.solution.joint_state)
             else:
-                return fk_response.pose_stamped
+                PrettyPrintMoveItErrorCode(response.error_code.val, "PR2 left arm IK")
+                return None
         else:
             return None
 
-class SimpleRightArmKinematics:
+    def ComputeRightArmIK(self, desired_wrist_pose_stamped, seed_state=None, collision_aware=False, raw_output=False):
+        request = GetPositionIKRequest()
+        request.ik_request.group_name = "right_arm"
+        request.ik_request.pose_stamped = desired_wrist_pose_stamped
+        request.ik_request.avoid_collisions = collision_aware
+        if (seed_state != None):
+            if (type(seed_state) == RobotState):
+                request.ik_request.robot_state = seed_state
+            elif (type(seed_state) == JointState):
+                request.ik_request.robot_state.joint_state = seed_state
+            elif (type(seed_state) == list):
+                request.ik_request.robot_state.joint_state = MakeRightArmJointState(seed_state)
+        response = None
+        try:
+            response = self.ikClient.call(request)
+        except:
+            rospy.logerr("IK service call failed to connect to IK server")
+            response = None
+        if (response != None):
+            # Check the error state
+            if (response.error_code.val == MoveItErrorCodes.SUCCESS):
+                if (raw_output):
+                    return response.solution
+                else:
+                    return ExtractRightArmFromJointState(response.solution.joint_state)
+            else:
+                PrettyPrintMoveItErrorCode(response.error_code.val, "PR2 right arm IK")
+                return None
+        else:
+            return None
+
+class SimpleForwardKinematics:
 
     def __init__(self):
-        #Set the IK solver info
-        rospy.wait_for_service("pr2_right_arm_kinematics/get_ik_solver_info")
-        self.ik_solver_host = rospy.ServiceProxy("pr2_right_arm_kinematics/get_ik_solver_info", GetKinematicSolverInfo)
-        self.ik_solver_req = GetKinematicSolverInfo._request_class()
-        self.ik_solver_res = self.ik_solver_host.call(self.ik_solver_req)
-        #Set the FK solver info
-        rospy.wait_for_service("pr2_right_arm_kinematics/get_fk_solver_info")
-        self.fk_solver_host = rospy.ServiceProxy("pr2_right_arm_kinematics/get_fk_solver_info", GetKinematicSolverInfo)
-        self.fk_solver_req = GetKinematicSolverInfo._request_class()
-        self.fk_solver_res = self.fk_solver_host.call(self.fk_solver_req)
-        #Set up the right arm forward kinematics service call
-        rospy.wait_for_service("pr2_right_arm_kinematics/get_fk")
-        self.right_FK_host = rospy.ServiceProxy("pr2_right_arm_kinematics/get_fk", GetPositionFK)
-        #Set up the right arm collision-free inverse kinematics service call
-        rospy.wait_for_service("pr2_right_arm_kinematics/get_constraint_aware_ik")
-        self.right_CAIK_host = rospy.ServiceProxy("pr2_right_arm_kinematics/get_constraint_aware_ik", GetConstraintAwarePositionIK)
-        #Set up the right arm inverse kinematics service call
-        rospy.wait_for_service("pr2_right_arm_kinematics/get_ik")
-        self.right_IK_host = rospy.ServiceProxy("pr2_right_arm_kinematics/get_ik", GetPositionIK)
-        rospy.loginfo("PR2 Right arm kinematics services loaded")
+        rospy.loginfo("Connecting to MoveIt! FK service...")
+        rospy.wait_for_service("compute_fk")
+        self.fkClient = rospy.ServiceProxy("compute_fk", GetPositionFK)
+        rospy.loginfo("...FK service loaded")
 
-    def RunConstraintAwareIK(self, desired_wrist_pose_stamped, seed_state=None):
-        ik_request = GetConstraintAwarePositionIK._request_class()
-        #Populate the header
-        ik_request.timeout = rospy.Duration(5.0)
-        ik_request.ik_request.ik_link_name = "r_wrist_roll_link"
-        #Populate the desired pose
-        ik_request.ik_request.pose_stamped = desired_wrist_pose_stamped
-        #Populate the IK seed state
-        ik_request.ik_request.ik_seed_state.joint_state.name = self.ik_solver_res.kinematic_solver_info.joint_names
-        if (seed_state == None):
-            for i in range(len(self.ik_solver_res.kinematic_solver_info.joint_names)):
-                middle_position = (self.ik_solver_res.kinematic_solver_info.limits[i].min_position + self.ik_solver_res.kinematic_solver_info.limits[i].max_position) / 2.0
-                ik_request.ik_request.ik_seed_state.joint_state.position.append(middle_position)
+    def ComputeFK(self, state, fk_frame_id, fk_link_names):
+        request = GetPositionFKRequest()
+        request.header.frame_id = fk_frame_id
+        # First, figure out the type of the provided link names and process accordingly
+        if (type(fk_link_names) == list):
+            request.fk_link_names = fk_link_names
+        elif (type(fk_link_names) == str):
+            request.fk_link_names = [fk_link_names]
         else:
-            ik_request.ik_request.ik_seed_state.joint_state.position = seed_state
-        #Actually call the IK system
-        ik_response = self.right_CAIK_host.call(ik_request)
-        if (ik_response.error_code.val == ik_response.error_code.SUCCESS):
-            return ik_response.solution.joint_state.position
+            raise AttributeError("Provided fk_link_names is an invalid type")
+        # Second, figure out the type of the provided state and process accordingly
+        if (type(state) == RobotState):
+            request.robot_state = state
+        elif (type(state) == JointState):
+            request.robot_state.joint_state = state
         else:
-            #Unable to find an IK solution
-            return None
-
-    def RunIK(self, desired_wrist_pose_stamped, seed_state=None):
-        ik_request = GetPositionIK._request_class()
-        #Populate the header
-        ik_request.timeout = rospy.Duration(5.0)
-        ik_request.ik_request.ik_link_name = "r_wrist_roll_link"
-        #Populate the desired pose
-        ik_request.ik_request.pose_stamped = desired_wrist_pose_stamped
-        #Populate the IK seed state
-        ik_request.ik_request.ik_seed_state.joint_state.name = self.ik_solver_res.kinematic_solver_info.joint_names
-        if (seed_state == None):
-            for i in range(len(self.ik_solver_res.kinematic_solver_info.joint_names)):
-                middle_position = (self.ik_solver_res.kinematic_solver_info.limits[i].min_position + self.ik_solver_res.kinematic_solver_info.limits[i].max_position) / 2.0
-                ik_request.ik_request.ik_seed_state.joint_state.position.append(middle_position)
-        else:
-            ik_request.ik_request.ik_seed_state.joint_state.position = seed_state
-        #Actually call the IK system
-        ik_response = self.right_IK_host.call(ik_request)
-        if (ik_response.error_code.val == ik_response.error_code.SUCCESS):
-            return ik_response.solution.joint_state.position
-        else:
-            #Unable to find an IK solution
-            return None
-
-    def RunFK(self, joint_state, target_frame_id, target_link_id):
-        fk_request = GetPositionFK._request_class()
-        fk_request.header.frame_id = target_frame_id
-        if (type(target_link_id) == type([])):
-            fk_request.fk_link_names = target_link_id
-        else:
-            fk_request.fk_link_names = [target_link_id]
-        fk_request.robot_state.joint_state.name = self.fk_solver_res.kinematic_solver_info.joint_names
-        fk_request.robot_state.joint_state.position = joint_state
-        fk_response = self.right_FK_host.call(fk_request)
-        if (fk_response.error_code.val == fk_response.error_code.SUCCESS):
-            if (len(fk_response.pose_stamped) == 1):
-                return fk_response.pose_stamped[0]
+            raise AttributeError("Provided state is an invalid type")
+        # Call the FK server
+        response = None
+        try:
+            response = self.fkClient.call(request)
+        except:
+            rospy.logerr("FK service call failed to connect to FK server")
+            response = None
+        if (response != None):
+            # Check the error state
+            if (response.error_code.val == MoveItErrorCodes.SUCCESS):
+                if (len(response.fk_link_names) == 1):
+                    return response.pose_stamped[0]
+                else:
+                    return response.pose_stamped
             else:
-                return fk_response.pose_stamped
+                PrettyPrintMoveItErrorCode(response.error_code.val, "PR2 FK")
+                return None
         else:
             return None
+
+    def ComputeLeftArmFK(self, state, fk_frame_id, fk_link_names):
+        # First, figure out the type of the provided state and process accordingly
+        if (type(state) == RobotState):
+            return self.ComputeFK(state, fk_frame_id, fk_link_names)
+        elif (type(state) == JointState):
+            return self.ComputeFK(state, fk_frame_id, fk_link_names)
+        elif (type(state) == list):
+            return self.ComputeFK(MakeLeftArmJointState(state), fk_frame_id, fk_link_names)
+        else:
+            raise AttributeError("Provided state is an invalid type")
+
+    def ComputeRightArmFK(self, state, fk_frame_id, fk_link_names):
+        # First, figure out the type of the provided state and process accordingly
+        if (type(state) == RobotState):
+            return self.ComputeFK(state, fk_frame_id, fk_link_names)
+        elif (type(state) == JointState):
+            return self.ComputeFK(state, fk_frame_id, fk_link_names)
+        elif (type(state) == list):
+            return self.ComputeFK(MakeRightArmJointState(state), fk_frame_id, fk_link_names)
+        else:
+            raise AttributeError("Provided state is an invalid type")
