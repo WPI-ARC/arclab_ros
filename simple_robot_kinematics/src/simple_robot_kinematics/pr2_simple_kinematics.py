@@ -133,6 +133,8 @@ class SimpleInverseKinematics:
                 request.ik_request.robot_state.joint_state = seed_state
             elif (type(seed_state) == list):
                 request.ik_request.robot_state.joint_state = MakeLeftArmJointState(seed_state)
+            else:
+                raise AttributeError("Provided seed_state is an invalid type")
         response = None
         try:
             response = self.ikClient.call(request)
@@ -164,6 +166,8 @@ class SimpleInverseKinematics:
                 request.ik_request.robot_state.joint_state = seed_state
             elif (type(seed_state) == list):
                 request.ik_request.robot_state.joint_state = MakeRightArmJointState(seed_state)
+            else:
+                raise AttributeError("Provided seed_state is an invalid type")
         response = None
         try:
             response = self.ikClient.call(request)
