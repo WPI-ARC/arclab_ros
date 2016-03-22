@@ -1,1 +1,4 @@
 import pr2_simple_kinematics
+import sda10_simple_kinematics
+import abb_irb1600_120_simple_kinematics
+import abb_irb1600_145_simple_kinematics
